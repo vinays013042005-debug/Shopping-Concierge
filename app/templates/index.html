@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ATELIER // Hyper-Personalized Retail Concierge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Bar Navigation -->
+    <header class="top-nav">
+      <div class="brand-logo">
+        <span class="logo-mark">◈</span>
+        <div class="brand-text">
+          <span class="brand-title">ATELIER</span>
+          <span class="brand-sub">Retail AI Concierge &bull; RAG</span>
+        </div>
+      </div>
+
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="concierge">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Stylist Concierge
+        </button>
+        <button class="nav-tab" data-tab="size-assistant">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21v-2a6.5 6.5 0 0 1 13 0v2"/></svg>
+          Photo Size Assistant
+        </button>
+        <button class="nav-tab" data-tab="catalog">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Live Inventory
+        </button>
+        <button class="nav-tab" data-tab="profile">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Customer Profile
+        </button>
+      </nav>
+
+      <div class="system-status-pills">
+        <div class="status-pill" id="ollama-pill" title="Local LLM Status">
+          <span class="pill-dot"></span>
+          <span class="pill-text">LLM</span>
+        </div>
+        <div class="status-pill" id="chroma-pill" title="ChromaDB Vector Store">
+          <span class="pill-dot"></span>
+          <span class="pill-text">Vector RAG</span>
+        </div>
+        <div class="status-pill active-pill" id="sqlite-pill" title="SQLite Live Inventory Guardrail">
+          <span class="pill-dot success"></span>
+          <span class="pill-text">SQLite Guardrail</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace Area -->
+    <main class="main-content">
+
+      <!-- TAB 1: STYLIST CONCIERGE -->
+      <section class="tab-pane active" id="pane-concierge">
+        <div class="concierge-split-layout">
+          <!-- Left: Conversational Assistant -->
+          <div class="chat-container">
+            <div class="chat-header">
+              <div class="chat-header-info">
+                <h3>Personal Stylist Chat</h3>
+                <p>Natural language search powered by Qwen 2.5 3B & ChromaDB with real-time SQLite inventory enforcement</p>
+              </div>
+              <div class="customer-active-badge" id="active-customer-indicator">
+                👤 Guest Shopper
+              </div>
+            </div>
+
+            <!-- Suggestion Prompts -->
+            <div class="prompt-chips-wrapper">
+              <span class="chip-label">Try asking:</span>
+              <button class="chip-btn" data-query="I need a comfortable outfit for a beach wedding under ₹3,000. I prefer loose-fitting clothes in pastel colors.">
+                🏖️ Beach wedding under ₹3,000 in pastel
+              </button>
+              <button class="chip-btn" data-query="Find me an elegant silk dress for an evening cocktail party.">
+                🍸 Silk dress for evening cocktail
+              </button>
+              <button class="chip-btn" data-query="Show me a festive cotton kurta in pastel mint for a wedding sangeet.">
+                ✨ Festive pastel kurta under ₹3,000
+              </button>
+              <button class="chip-btn" data-query="Casual relaxed linen trousers in beige.">
+                🌿 Relaxed linen trousers
+              </button>
+            </div>
+
+            <!-- Chat Messages Log -->
+            <div class="chat-messages" id="chat-messages">
+              <div class="message-bubble bot-message intro-message">
+                <div class="bot-avatar">◈</div>
+                <div class="message-body">
+                  <p><strong>Hello and welcome to ATELIER.</strong> I am your personal shopping concierge.</p>
+                  <p>Tell me what occasion you're preparing for, your budget, preferred fit, or colors—for example:</p>
+                  <blockquote class="sample-quote">"I need a comfortable outfit for a beach wedding under ₹3,000. I prefer loose-fitting clothes in pastel colors."</blockquote>
+                  <p class="sub-note">Every recommendation is cross-checked live against our SQLite inventory to ensure your exact size and color are in stock.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Filter Overrides Bar -->
+            <div class="active-intent-bar" id="active-intent-bar" style="display: none;">
+              <span class="intent-title">Detected Criteria:</span>
+              <div class="intent-tags" id="intent-tags-container"></div>
+              <button class="btn-clear-intent" id="btn-clear-intent" title="Reset filters">✕ Reset</button>
+            </div>
+
+            <!-- Chat Input Bar -->
+            <div class="chat-input-bar">
+              <form id="chat-form">
+                <input type="text" id="chat-input" placeholder="Describe the occasion, budget, fit, or fabric you're looking for..." autocomplete="off" required>
+                <button type="submit" id="btn-send-chat" class="btn-primary">
+                  <span>Send</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Right: Curated Recommendations & Guardrails -->
+          <div class="recommendations-container">
+            <div class="section-title-row">
+              <div>
+                <h2>Verified In-Stock Recommendations</h2>
+                <p class="subtitle" id="rec-subtitle">Grounded in semantic search, ranked by customer preferences</p>
+              </div>
+              <div class="guardrail-counter" id="guardrail-counter-badge">
+                <span class="guard-icon">🛡️</span>
+                <span id="guard-text">Guardrails Ready</span>
+              </div>
+            </div>
+
+            <!-- Guardrail Info Banner -->
+            <div class="guardrail-alert-box" id="guardrail-alert" style="display:none;">
+              <div class="alert-header">
+                <strong>Inventory Guardrail Report</strong>
+                <span id="alert-items-count">0 items checked</span>
+              </div>
+              <ul class="guardrail-notes-list" id="guardrail-notes-list"></ul>
+            </div>
+
+            <!-- Product Grid -->
+            <div class="products-grid" id="recommendations-grid">
+              <div class="empty-state-card">
+                <div class="empty-icon">👗</div>
+                <h3>Your Curated Outfits Will Appear Here</h3>
+                <p>Send a message in the chat or choose one of the suggestion chips to see personalized recommendations grounded in live SQLite inventory.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: PHOTO SIZE ASSISTANT -->
+      <section class="tab-pane" id="pane-size-assistant">
+        <div class="size-assistant-container">
+          <div class="assistant-header">
+            <div>
+              <span class="badge-accent">Privacy-First Computer Vision</span>
+              <h2>Photo-Based Size Assistant</h2>
+              <p>Upload a front-facing full-body photo to estimate proportional landmarks and compare against brand size charts.</p>
+            </div>
+            <div class="privacy-guarantee-card">
+              <div class="privacy-icon">🔒</div>
+              <div>
+                <strong>Local & Ephemeral Processing</strong>
+                <p>Photographs are analyzed strictly in local memory and deleted immediately after processing. We never store photos or infer sensitive attributes.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="size-assistant-grid">
+            <!-- Left: Upload & Consent Form -->
+            <div class="assistant-card">
+              <h3>1. Upload & Calibration</h3>
+              
+              <div class="consent-box">
+                <label class="consent-checkbox-label">
+                  <input type="checkbox" id="consent-checkbox" required>
+                  <span><strong>I give explicit consent</strong> for the local AI to analyze my photograph solely for clothing size estimation. Photos will not be stored.</span>
+                </label>
+              </div>
+
+              <div class="drop-zone" id="photo-drop-zone">
+                <input type="file" id="photo-file-input" accept="image/jpeg,image/png,image/webp" style="display:none;">
+                <div class="drop-zone-prompt" id="drop-zone-prompt">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <p><strong>Click to choose photo</strong> or drag & drop here</p>
+                  <span>JPEG, PNG, or WebP &bull; Max 5MB &bull; Full-body front-facing</span>
+                </div>
+                <div class="preview-container" id="preview-container" style="display: none;">
+                  <img id="image-preview" alt="User full-body preview">
+                  <canvas id="landmark-canvas"></canvas>
+                  <button type="button" class="btn-remove-photo" id="btn-remove-photo">✕ Change</button>
+                </div>
+              </div>
+
+              <div class="calibration-fields">
+                <div class="form-group">
+                  <label for="input-height">Your Height (cm) <span class="label-hint">Optional, improves calibration</span></label>
+                  <input type="number" id="input-height" placeholder="e.g. 175" min="100" max="230" step="0.5">
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="select-brand">Brand Chart</label>
+                    <select id="select-brand">
+                      <option value="Linen Trail">Linen Trail</option>
+                      <option value="Coastal Breeze">Coastal Breeze</option>
+                      <option value="Aura Studio">Aura Studio</option>
+                      <option value="Riwaayat">Riwaayat</option>
+                      <option value="Nordic Pure">Nordic Pure</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="select-category">Category</label>
+                    <select id="select-category">
+                      <option value="Shirts">Shirts</option>
+                      <option value="Dresses">Dresses</option>
+                      <option value="Trousers">Trousers</option>
+                      <option value="Kurtas">Kurtas</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="select-gender">Gender</label>
+                    <select id="select-gender">
+                      <option value="Men">Men</option>
+                      <option value="Women">Women</option>
+                      <option value="Unisex">Unisex</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button class="btn-primary btn-block" id="btn-analyze-size" disabled>
+                  <span>Analyze Pose & Match Size</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Right: Results & Brand Size Chart Matching -->
+            <div class="assistant-card" id="size-results-card">
+              <h3>2. Size Recommendations & Brand Chart</h3>
+
+              <div id="size-results-empty" class="empty-state-card">
+                <div class="empty-icon">📏</div>
+                <h4>No Analysis Yet</h4>
+                <p>Upload a front-facing photograph and ensure consent is enabled to view recommended sizes.</p>
+              </div>
+
+              <div id="size-results-content" style="display: none;">
+                <!-- Main Recommendation Badge -->
+                <div class="size-result-hero">
+                  <div class="hero-left">
+                    <span class="hero-sub">Estimated Recommended Size</span>
+                    <div class="recommended-size-tag" id="res-recommended-size">M</div>
+                    <div class="alt-sizes-row" id="res-alt-sizes">Alternative: L, S</div>
+                  </div>
+                  <div class="hero-right">
+                    <div class="confidence-meter-box">
+                      <span class="meter-label">Confidence</span>
+                      <div class="confidence-badge" id="res-confidence-badge">High (85%)</div>
+                      <span class="calibration-type" id="res-calibration-method">Calibrated</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Measurements Breakdown -->
+                <div class="measurements-pill-row">
+                  <div class="meas-pill">
+                    <span class="meas-name">Chest Est.</span>
+                    <span class="meas-val" id="res-chest-cm">-- cm</span>
+                  </div>
+                  <div class="meas-pill">
+                    <span class="meas-name">Waist Est.</span>
+                    <span class="meas-val" id="res-waist-cm">-- cm</span>
+                  </div>
+                  <div class="meas-pill">
+                    <span class="meas-name">Hip Est.</span>
+                    <span class="meas-val" id="res-hip-cm">-- cm</span>
+                  </div>
+                </div>
+
+                <!-- Brand Size Chart Comparison Table -->
+                <div class="size-chart-table-wrap">
+                  <div class="chart-header">
+                    <strong id="chart-table-brand-label">Linen Trail Size Chart</strong>
+                    <span class="chart-unit">Circumference in CM</span>
+                  </div>
+                  <table class="size-chart-table" id="brand-chart-table">
+                    <thead>
+                      <tr>
+                        <th>Size</th>
+                        <th>Chest Range</th>
+                        <th>Waist Range</th>
+                        <th>Garment Chest</th>
+                        <th>Fit</th>
+                      </tr>
+                    </thead>
+                    <tbody id="brand-chart-tbody"></tbody>
+                  </table>
+                </div>
+
+                <!-- Notes & Disclaimers -->
+                <div class="assistant-notes-box">
+                  <ul id="size-notes-list"></ul>
+                  <p class="disclaimer-text" id="size-disclaimer-text"></p>
+                </div>
+
+                <!-- Actions -->
+                <div class="size-action-row">
+                  <button class="btn-secondary" id="btn-apply-size-to-chat">
+                    💬 Use Size in Chatbot Search
+                  </button>
+                  <div class="manual-override-select">
+                    <span>Or pick manually:</span>
+                    <button class="manual-size-btn" data-size="S">S</button>
+                    <button class="manual-size-btn" data-size="M">M</button>
+                    <button class="manual-size-btn" data-size="L">L</button>
+                    <button class="manual-size-btn" data-size="XL">XL</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: LIVE CATALOG BROWSER -->
+      <section class="tab-pane" id="pane-catalog">
+        <div class="catalog-container">
+          <div class="catalog-header">
+            <div>
+              <h2>Store Catalog & Inventory Status</h2>
+              <p>Explore real-time SQLite product variants and stock availability</p>
+            </div>
+            <div class="catalog-filters">
+              <select id="catalog-category-filter">
+                <option value="">All Categories</option>
+                <option value="Shirts">Shirts</option>
+                <option value="Dresses">Dresses</option>
+                <option value="Trousers">Trousers</option>
+                <option value="Kurtas">Kurtas</option>
+                <option value="Blazers">Blazers</option>
+                <option value="T-Shirts">T-Shirts</option>
+              </select>
+              <select id="catalog-fit-filter">
+                <option value="">All Fits</option>
+                <option value="Loose">Loose</option>
+                <option value="Relaxed">Relaxed</option>
+                <option value="Slim">Slim</option>
+                <option value="Regular">Regular</option>
+                <option value="Oversized">Oversized</option>
+              </select>
+              <button class="btn-secondary" id="btn-refresh-catalog">↻ Refresh</button>
+            </div>
+          </div>
+
+          <div class="products-grid catalog-grid" id="catalog-grid"></div>
+        </div>
+      </section>
+
+      <!-- TAB 4: CUSTOMER PROFILE & PERSONALIZATION -->
+      <section class="tab-pane" id="pane-profile">
+        <div class="profile-container">
+          <div class="profile-header">
+            <div>
+              <h2>Customer Personalization Profile</h2>
+              <p>Switch test shoppers or customize your style preferences to guide the RAG ranking model</p>
+            </div>
+            <div class="profile-switcher">
+              <label>Switch Demo Shopper:</label>
+              <select id="customer-select">
+                <option value="">Guest Shopper (No Profile)</option>
+                <option value="CUST-101" selected>Aarav Sharma (Linen, Pastel, ₹3,000)</option>
+                <option value="CUST-102">Priya Nair (Dresses, Floral, ₹3,500)</option>
+                <option value="CUST-103">Rohan Verma (Blazers, Luxury, ₹7,500)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="profile-grid">
+            <div class="profile-card">
+              <h3>Style & Sizing Preferences</h3>
+              <form id="preferences-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="pref-size">Preferred Size</label>
+                    <select id="pref-size">
+                      <option value="">Not set</option>
+                      <option value="XS">XS</option>
+                      <option value="S">S</option>
+                      <option value="M">M</option>
+                      <option value="L">L</option>
+                      <option value="XL">XL</option>
+                      <option value="XXL">XXL</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="pref-fit">Preferred Fit</label>
+                    <select id="pref-fit">
+                      <option value="">Not set</option>
+                      <option value="Loose">Loose</option>
+                      <option value="Relaxed">Relaxed</option>
+                      <option value="Regular">Regular</option>
+                      <option value="Slim">Slim</option>
+                      <option value="Oversized">Oversized</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="pref-budget">Default Budget Ceiling (₹)</label>
+                  <input type="number" id="pref-budget" placeholder="e.g. 3000">
+                </div>
+
+                <div class="form-group">
+                  <label for="pref-colors">Preferred Color Palettes</label>
+                  <input type="text" id="pref-colors" placeholder="e.g. Pastel Blue, Sage Green, Beige">
+                </div>
+
+                <div class="form-group">
+                  <label for="pref-materials">Preferred Materials</label>
+                  <input type="text" id="pref-materials" placeholder="e.g. Linen, Cotton, Silk Blend">
+                </div>
+
+                <div class="form-group">
+                  <label for="pref-notes">Style Notes & Occasions</label>
+                  <textarea id="pref-notes" rows="3" placeholder="e.g. Prefers breathable beach wedding attire in soothing pastel tones."></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary" id="btn-save-preferences">
+                  Save Customer Preferences
+                </button>
+              </form>
+            </div>
+
+            <div class="profile-card">
+              <h3>Order History & Brand Loyalty</h3>
+              <p class="subtitle">Past purchases provide subtle ranking boosts for favorite brands</p>
+              <div class="purchases-list" id="purchases-list">
+                <div class="empty-state-card">
+                  <p>Select a customer profile to view purchase history.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Global Loading Toast -->
+    <div class="loading-overlay" id="loading-overlay" style="display:none;">
+      <div class="spinner"></div>
+      <p id="loading-text">Analyzing with local AI...</p>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

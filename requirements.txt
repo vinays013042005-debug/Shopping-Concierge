@@ -1,0 +1,24 @@
+# Core Web Framework
+fastapi==0.143.2
+uvicorn[standard]==0.54.0
+pydantic==2.14.1
+pydantic-settings==2.16.0
+python-multipart==0.0.32
+jinja2==3.1.6
+httpx==0.28.1
+requests==2.34.2
+
+# Vector Store & Embeddings
+chromadb==1.5.9
+sentence-transformers==6.1.0
+numpy==1.26.4
+torch==2.14.1
+
+# Computer Vision & Landmark Detection
+opencv-python==4.11.0.86
+mediapipe==1.1.1
+pillow==12.3.0
+
+# Testing
+pytest==9.1.1
+pytest-asyncio==1.4.0
